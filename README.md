@@ -72,7 +72,7 @@ Para que o sistema funcione corretamente, é necessário ter instalado na sua m�
 
 <h2 id="routes">Dados para teste</h2>
 
-As rotas foram testadas utilizando Insomnia, basta fazer o download do arquivo <a href="https://github.com/vitorroliveiraa/SalesSystem-API/blob/main/salessystem-insomnia.json" target="_blank" download>clicando aqui</a> e importar dentro do Insomnia que todos os dados já estarão lá.
+As rotas foram testadas utilizando Insomnia, basta fazer o download do arquivo <a href="https://github.com/vitorroliveiraa/SalesSystem-API/blob/main/salessystem-insomnia.json" target="_blank" download>clicando aqui</a> e importar dentro do Insomnia que todos os dados já ficarão disponiveis. Não é necessário copiar o token, as rotas tem acesso através de uma configuração da própria ferramenta.
 
 Exemplo:
 
