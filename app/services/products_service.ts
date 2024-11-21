@@ -9,7 +9,10 @@ interface ProductData {
 
 class ProductsService {
   async listAllProducts() {
-    return await Product.query().where('is_deleted', false).orderBy('name', 'asc')
+    return await Product.query()
+      .select('id', 'name', 'description', 'price')
+      .where('is_deleted', false)
+      .orderBy('name', 'asc')
   }
 
   async showProduct(id: string) {

@@ -9,7 +9,7 @@ interface ClientData {
 
 class ClientsService {
   async listAllClients() {
-    return await Client.query().orderBy('id', 'asc')
+    return await Client.query().select('id', 'name', 'cpf').orderBy('id', 'asc')
   }
 
   async showCustomerWithDetails(id: string, month?: string, year?: string) {

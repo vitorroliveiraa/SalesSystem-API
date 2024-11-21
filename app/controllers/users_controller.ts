@@ -1,13 +1,13 @@
 import { loginValidator, registerValidator } from '#validators/auth'
 import type { HttpContext } from '@adonisjs/core/http'
-import { RegisterRequest, RegisterResponseBody } from './interfaces/register.js'
+import { RegisterRequest } from './interfaces/register.js'
 import UsersService from '../services/users_service.js'
 
 export default class UsersController {
   async signup({ request, response }: HttpContext): Promise<void> {
     const payload: RegisterRequest = await request.validateUsing(registerValidator)
 
-    const user: RegisterResponseBody = await UsersService.signup(payload)
+    const user = await UsersService.signup(payload)
     return response.status(201).json(user)
   }
 
@@ -18,7 +18,7 @@ export default class UsersController {
 
     return response.ok({
       token: token,
-      ...user.serialize(),
+      email: user.email,
     })
   }
 }
