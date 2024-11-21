@@ -70,6 +70,6 @@ Para que o sistema funcione corretamente, é necessário ter instalado na sua m�
 |----------------------|-----------------------------------------------------
 | `POST /sales`     | Registra uma nova venda associada a um cliente e produto.
 
-<h3 id="routes">Dados para teste</h2>
+<h2 id="routes">Dados para teste</h2>
 
-As rotas foram testadas utilizando Insomnia, basta fazer o download do arquivo [clicando aqui](https://raw.githubusercontent.com/vitorroliveiraa/SalesSystem-API/main/salessystem-insomnia.json) e importar dentro do Insomnia que todos os dados já estarão lá.
+As rotas foram testadas utilizando Insomnia, basta fazer o download do arquivo <a href="https://github.com/vitorroliveiraa/SalesSystem-API/blob/main/salessystem-insomnia.json" target="_blank" download>clicando aqui</a> e importar dentro do Insomnia que todos os dados já estarão lá.
