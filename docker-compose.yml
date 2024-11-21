@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  mysql:
+    image: bitnami/mysql:9.0.1-debian-12-r9
+    container_name: sales-system
+    ports:
+      - "${DB_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - sales-system-mysql-data:/var/lib/mysql
+
+volumes:
+  sales-system-mysql-data:
