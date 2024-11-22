@@ -31,7 +31,7 @@ Para que o sistema funcione corretamente, é necessário ter instalado na sua m�
    - Agora, basta definir o restante das variáveis e subir o container com o banco de dados.
 6. Subir o container com o banco de dados: `docker compose up -d`
 7. Criar tabelas no banco de dados: `node ace migration:run`
-8. Basta rodar `npm run dev` e testar os endpoints.
+8. Basta rodar `npm run dev` e testar os endpoints [clicando aqui](https://github.com/vitorroliveiraa/SalesSystem-API?tab=readme-ov-file#dados-para-teste).
 
 
 <h2 id="routes">📍 API Endpoints</h2>
