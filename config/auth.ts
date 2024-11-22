@@ -5,7 +5,7 @@ import { JwtGuard } from './jwt_guard.js'
 import env from '#start/env'
 
 const jwtConfig = {
-  secret: env.get('APP_KEY'),
+  secret: env.get('JWT_SECRET'),
 }
 
 const userProvider = sessionUserProvider({
