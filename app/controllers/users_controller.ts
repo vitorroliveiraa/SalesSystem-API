@@ -11,14 +11,15 @@ export default class UsersController {
     return response.status(201).json(user)
   }
 
-  async login({ request, response }: HttpContext): Promise<void> {
-    const { email, password } = await request.validateUsing(loginValidator)
+  async login({ request, response, auth }: HttpContext): Promise<void> {
+    const data = await request.validateUsing(loginValidator)
 
-    const { token, user } = await UsersService.login(email, password)
+    const { email, type, token } = await UsersService.login(data, auth)
 
     return response.ok({
-      token: token,
-      email: user.email,
+      email,
+      type,
+      token,
     })
   }
 }

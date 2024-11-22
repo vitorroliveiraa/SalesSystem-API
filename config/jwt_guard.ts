@@ -1,110 +1,156 @@
-import User from '#models/user'
-import { Exception } from '@adonisjs/core/exceptions'
+import { symbols, errors } from '@adonisjs/auth'
+import { AuthClientResponse, GuardContract } from '@adonisjs/auth/types'
 import type { HttpContext } from '@adonisjs/core/http'
-import type { NextFn } from '@adonisjs/core/types/http'
-// import { AuthClientError } from '@adonisjs/auth/errors'
-// import { UserModel } from '../models/user.js'
+import jwt from 'jsonwebtoken'
+import { JwtUserProviderContract } from '../app/interfaces/jwt.js'
 
-/**
- * Implementação do JWT Guard
- */
-export class JwtGuard {
+export type JwtGuardOptions = {
+  secret: string
+}
+
+export class JwtGuard<UserProvider extends JwtUserProviderContract<unknown>>
+  implements GuardContract<UserProvider[typeof symbols.PROVIDER_REAL_USER]>
+{
   /**
-   * Nome único do guard
+   * Uma lista de eventos e seus tipos emitidos por
+   * a guarda.
    */
-  declare name: 'jwt'
-
+  declare [symbols.GUARD_KNOWN_EVENTS]: {}
   /**
-   * Autenticação em andamento
+   * Um nome exclusivo para o driver de guarda
    */
-  private authenticatedUser?: User
-
-  constructor(
-    public ctx: HttpContext,
-    private config: Record<string, any>
-  ) {}
-
+  driverName: 'jwt' = 'jwt'
   /**
-   * Verifica se o usuário está autenticado
+   * Uma flag para saber se a autenticação foi uma tentativa
+   * durante a requisição HTTP atual
    */
-  async check() {
-    if (this.authenticatedUser) {
-      return true
-    }
+  authenticationAttempted: boolean = false
+  /**
+   * Um booleano para saber se a requisição atual tem
+   * sido autenticado
+   */
+  isAuthenticated: boolean = false
+  /**
+   * Referência ao usuário atualmente autenticado
+   */
+  user?: UserProvider[typeof symbols.PROVIDER_REAL_USER]
 
-    const token = this.ctx.request.header('authorization')?.replace('Bearer ', '')
-    if (!token) {
-      return false
-    }
+  #ctx: HttpContext
+  #userProvider: UserProvider
+  #options: JwtGuardOptions
 
-    try {
-      // Aqui você implementa a lógica de verificação do token JWT
-      // e busca do usuário
-      const user = await User.findOrFail(1) // Substitua pela sua lógica
-      this.authenticatedUser = user
-      return true
-    } catch (error) {
-      return false
-    }
+  constructor(ctx: HttpContext, userProvider: UserProvider, options: JwtGuardOptions) {
+    this.#ctx = ctx
+    this.#userProvider = userProvider
+    this.#options = options
   }
 
   /**
-   * Retorna o usuário autenticado
+   * Gere um token JWT para um determinado usuário.
    */
-  async user() {
-    if (!(await this.check())) {
-      throw new Exception('Unauthorized access', { code: 'E_UNAUTHORIZED_ACCESS', status: 401 })
-      // throw new AuthClientError('Unauthorized access', 401, 'E_UNAUTHORIZED_ACCESS')
-    }
-
-    return this.authenticatedUser!
-  }
-
-  /**
-   * Autentica um usuário usando credenciais
-   */
-  async attempt(uid: string, password: string) {
-    try {
-      const user = await User.verifyCredentials(uid, password)
-      // Gere e retorne o token JWT aqui
-      return {
-        type: 'bearer',
-        token: 'seu-token-jwt',
-      }
-    } catch (error) {
-      // throw new AuthClientError('Invalid credentials', 400, 'E_INVALID_CREDENTIALS')
-      throw new Exception('Invalid credentials', { code: 'E_INVALID_CREDENTIALS', status: 400 })
-    }
-  }
-
-  /**
-   * Faz login com um usuário existente
-   */
-  async login(user: User) {
-    this.authenticatedUser = user
-    // Gere e retorne o token JWT aqui
+  async generate(user: UserProvider[typeof symbols.PROVIDER_REAL_USER]) {
+    const providerUser = await this.#userProvider.createUserForGuard(user)
+    const token = jwt.sign({ userId: providerUser.getId() }, this.#options.secret)
     return {
       type: 'bearer',
-      token: 'seu-token-jwt',
+      token: token,
     }
   }
 
   /**
-   * Faz logout do usuário
+   * Autentique a requisição HTTP atual e retorne
+   * a instância do usuário se houver um token JWT válido
+   * ou lançar uma exceção
    */
-  async logout() {
-    // Implemente a lógica de invalidação do token se necessário
-    this.authenticatedUser = undefined
+  async authenticate(): Promise<UserProvider[typeof symbols.PROVIDER_REAL_USER]> {
+    /**
+     * Evite re-autenticação quando já foi feita
+     * para a requisição fornecida
+     */
+    if (this.authenticationAttempted) {
+      return this.getUserOrFail()
+    }
+    this.authenticationAttempted = true
+
+    /**
+     * Certifique-se de que o cabeçalho de autenticação exista
+     */
+    const authHeader = this.#ctx.request.header('authorization')
+    if (!authHeader) {
+      throw new errors.E_UNAUTHORIZED_ACCESS('Unauthorized access', {
+        guardDriverName: this.driverName,
+      })
+    }
+
+    /**
+     * Divida o valor do cabeçalho e leia o token dele
+     */
+    const [, token] = authHeader.split('Bearer ')
+    if (!token) {
+      throw new errors.E_UNAUTHORIZED_ACCESS('Unauthorized access', {
+        guardDriverName: this.driverName,
+      })
+    }
+
+    /**
+     * Verifique o token
+     */
+    const payload = jwt.verify(token, this.#options.secret)
+    if (typeof payload !== 'object' || !('userId' in payload)) {
+      throw new errors.E_UNAUTHORIZED_ACCESS('Unauthorized access', {
+        guardDriverName: this.driverName,
+      })
+    }
+
+    /**
+     * Busque o usuário por ID de usuário e salve uma referência a ele
+     */
+    const providerUser = await this.#userProvider.findById(payload.userId)
+    if (!providerUser) {
+      throw new errors.E_UNAUTHORIZED_ACCESS('Unauthorized access', {
+        guardDriverName: this.driverName,
+      })
+    }
+    this.user = providerUser.getOriginal()
+    return this.getUserOrFail()
   }
 
   /**
-   * Middleware de autenticação
+   * Igual a authenticate, mas não lança uma exceção
    */
-  async handle(ctx: HttpContext, next: NextFn) {
-    if (!(await this.check())) {
-      throw new Exception('Unauthorized access', { code: 'E_UNAUTHORIZED_ACCESS', status: 401 })
+  async check(): Promise<boolean> {
+    try {
+      await this.authenticate()
+      return true
+    } catch {
+      return false
     }
+  }
 
-    return next()
+  /**
+   * Retorna o usuário autenticado ou lança um erro
+   */
+  getUserOrFail(): UserProvider[typeof symbols.PROVIDER_REAL_USER] {
+    if (!this.user) {
+      throw new errors.E_UNAUTHORIZED_ACCESS('Unauthorized access', {
+        guardDriverName: this.driverName,
+      })
+    }
+    return this.user
+  }
+
+  /**
+   * Este método é chamado por Japa durante o teste quando "loginAs"
+   * método é usado para logar o usuário.
+   */
+  async authenticateAsClient(
+    user: UserProvider[typeof symbols.PROVIDER_REAL_USER]
+  ): Promise<AuthClientResponse> {
+    const token = await this.generate(user)
+    return {
+      headers: {
+        authorization: `Bearer ${token.token}`,
+      },
+    }
   }
 }
