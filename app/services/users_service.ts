@@ -1,6 +1,11 @@
-import env from '#start/env'
 import User from '#models/user'
 import type { RegisterRequest } from '#controllers/interfaces/register'
+import type { HttpContext } from '@adonisjs/core/http'
+
+interface ClientData {
+  email: string
+  password: string
+}
 
 class UsersService {
   async signup(payload: RegisterRequest) {
@@ -8,13 +13,14 @@ class UsersService {
     return { email: user.email }
   }
 
-  async login(email: string, password: string) {
-    const user = await User.verifyCredentials(email, password)
-    const token = await User.accessTokens.create(user, ['*'], {
-      expiresIn: env.get('JWT_EXPIRES_IN'),
-    })
+  async login(data: ClientData, auth: HttpContext['auth']) {
+    const user = await User.verifyCredentials(data.email, data.password)
 
-    return { token, user }
+    const userToken = await auth.use('jwt').generate(user)
+    return {
+      email: user.email,
+      ...userToken,
+    }
   }
 }
 
