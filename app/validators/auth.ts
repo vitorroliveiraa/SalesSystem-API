@@ -1,14 +1,12 @@
 import vine from '@vinejs/vine'
+import { emailRule } from './rules/email.js'
 
 export const registerValidator = vine.compile(
   vine.object({
     email: vine
       .string()
       .email()
-      .unique(async (query, field) => {
-        const user = await query.from('users').where('email', field).first()
-        return !user
-      }),
+      .use(emailRule({ table: 'users', column: 'email' })),
     password: vine.string().minLength(8).maxLength(64),
   })
 )

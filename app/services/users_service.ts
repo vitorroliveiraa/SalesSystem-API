@@ -4,8 +4,8 @@ import type { RegisterRequest } from '#controllers/interfaces/register'
 
 class UsersService {
   async signup(payload: RegisterRequest) {
-    const { email } = await User.create(payload)
-    return email
+    const user = await User.create(payload)
+    return { email: user.email }
   }
 
   async login(email: string, password: string) {
