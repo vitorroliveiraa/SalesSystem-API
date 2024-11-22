@@ -77,3 +77,9 @@ As rotas foram testadas utilizando Insomnia, basta fazer o download do arquivo <
 Exemplo:
 
 <img src="./gif-ss.gif"></img>
+
+<h2 id="routes">Dificuldades</h2>
+
+<h3 id="routes">JWT</h3>
+
+Tive dificuldades de implementar JWT na aplicação, um dos motivos é que nunca utilizei o framework e também achei a documentação um pouco vaga. Busquei alguns artigos na internet mas em sua grande maioria se de tratava da versão 5 do Adonis.
