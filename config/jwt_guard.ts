@@ -48,9 +48,12 @@ export class JwtGuard<UserProvider extends JwtUserProviderContract<unknown>>
   /**
    * Gere um token JWT para um determinado usuário.
    */
-  async generate(user: UserProvider[typeof symbols.PROVIDER_REAL_USER]) {
+  async generate(
+    user: UserProvider[typeof symbols.PROVIDER_REAL_USER],
+    options?: { expiresIn?: string | number }
+  ) {
     const providerUser = await this.#userProvider.createUserForGuard(user)
-    const token = jwt.sign({ userId: providerUser.getId() }, this.#options.secret)
+    const token = jwt.sign({ userId: providerUser.getId() }, this.#options.secret, options)
     return {
       type: 'bearer',
       token: token,
